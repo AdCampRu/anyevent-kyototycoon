@@ -15,13 +15,22 @@ sub new {
 	return bless(
 		{
 			server  => $args{server}  // '127.0.0.1:1978',
-			db      => $args{db}      // 0,
+			db      => $args{db},
 			timeout => $args{timeout} // 1,
 		},
 		ref($proto) || $proto
 	);
 }
 
+sub db {
+	if (@_ > 1) {
+		$_[0]->{db} = $_[1];
+	}
+
+	return $_[0]->{db};
+}
+
+# $kt->void($cb->($ret));
 sub void {
 	my $cb = pop();
 	my ($self) = @_;
@@ -35,6 +44,7 @@ sub void {
 	);
 }
 
+# $kt->echo([\%args, ]$cb->(\%vals));
 sub echo {
 	my $cb = pop();
 	my ($self, $args) = @_;
@@ -42,6 +52,7 @@ sub echo {
 	$self->call('echo', $args, $cb);
 }
 
+# $kt->report($cb->(\%vals));
 sub report {
 	my $cb = pop();
 	my ($self) = @_;
@@ -49,6 +60,7 @@ sub report {
 	$self->call('report', {}, $cb);
 }
 
+# $kt->play_script($name, [\%args, ]$cb->(\%vals));
 sub play_script {
 	my $cb = pop();
 	my ($self, $name, $args) = @_;
@@ -62,46 +74,69 @@ sub play_script {
 	);
 }
 
-sub status {
+sub tune_replication {
 	my $cb = pop();
-	my ($self) = @_;
 
-	$self->call('status', {}, $cb);
+	AE::log(error => 'Procedure "tune_replication" not implemented');
+	$cb->(1);
 }
 
+# $kt->status([$db, ]$cb->(\%vals));
+sub status {
+	my $cb = pop();
+	my ($self, $db) = @_;
+
+	$db //= $self->{db};
+
+	$self->call(
+		'status',
+		{defined($db) ? (DB => $db) : ()},
+		$cb
+	);
+}
+
+# $kt->clear([$db, ]$cb->($ret));
 sub clear {
 	my $cb = pop();
-	my ($self) = @_;
+	my ($self, $db) = @_;
+
+	$db //= $self->{db};
 
 	$self->call(
 		'clear',
-		{},
+		{defined($db) ? (DB => $db) : ()},
 		sub {
 			$cb->($_[0] ? (1) : ());
 		}
 	);
 }
 
+# $kt->set($key, $val, [$xt, [$db, ]]$cb->($ret));
 sub set {
 	my $cb = pop();
-	my ($self, $key, $val, $xt) = @_;
+	my ($self, $key, $val, $xt, $db) = @_;
+
+	$db //= $self->{db};
 
 	$self->call(
 		'set',
-		{key => $key, value => $val, (defined($xt) ? (xt => $xt) : ())},
+		{key => $key, value => $val, (defined($xt) ? (xt => $xt) : ()), (defined($db) ? (DB => $db) : ())},
 		sub {
 			$cb->($_[0] ? (1) : ());
 		}
 	);
 }
 
+# $kt->get($key, [$db, ]$cb->([$val, $xt]));
 sub get {
 	my $cb = pop();
-	my ($self, $key) = @_;
+	my ($self, $key, $db) = @_;
+
+	$db //= $self->{db};
 
 	$self->call(
 		'get',
-		{key => $key},
+		{key => $key, (defined($db) ? (DB => $db) : ())},
 		sub {
 			$cb->($_[0] ? ($_[0]->{value}, $_[0]->{xt}) : ());
 		}
