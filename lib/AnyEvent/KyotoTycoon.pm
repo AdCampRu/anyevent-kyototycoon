@@ -49,6 +49,8 @@ sub echo {
 	my $cb = pop();
 	my ($self, $args) = @_;
 
+	$args //= {};
+
 	$self->call('echo', $args, $cb);
 }
 
