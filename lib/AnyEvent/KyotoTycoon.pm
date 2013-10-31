@@ -49,6 +49,19 @@ sub report {
 	$self->call('report', {}, $cb);
 }
 
+sub play_script {
+	my $cb = pop();
+	my ($self, $name, $args) = @_;
+
+	$self->call(
+		'play_script',
+		{name => $name, ref($args) eq 'HASH' ? map { ('_' . $_ => $args->{$_}) } keys(%$args) : ()},
+		sub {
+			$cb->($_[0] ? {map { (substr($_, 1) => $_[0]{$_}) } keys(%{$_[0]})} : ());
+		}
+	);
+}
+
 sub set {
 	my $cb = pop();
 	my ($self, $key, $val, $xt) = @_;
