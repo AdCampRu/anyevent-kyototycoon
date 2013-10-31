@@ -158,7 +158,7 @@ sub call {
 		$body,
 		$enc,
 		sub {
-			my ($body, $enc) = @_;
+			my ($code, $body, $enc) = @_;
 
 			unless (defined($enc)) {
 				$cb->();
@@ -172,8 +172,10 @@ sub call {
 				$cb->();
 				return;
 			}
-			if (exists($data->{ERROR})) {
-				AE::log(error => 'Server error raised: ' . $data->{ERROR});
+			unless ($code == 200) {
+				if (exists($data->{ERROR})) {
+					AE::log(error => 'Server error raised: ' . $data->{ERROR});
+				}
 				$cb->();
 				return;
 			}
@@ -198,11 +200,12 @@ sub _request {
 		sub {
 			my ($body, $hdrs) = @_;
 
-			my $enc = AnyEvent::KyotoTycoon::_Util::check_encoding($hdrs->{'content-type'});
+			my $code = $hdrs->{Status};
+			my $enc  = AnyEvent::KyotoTycoon::_Util::check_encoding($hdrs->{'content-type'});
 
-			unless ($hdrs->{Status} == 200) {
-				AE::log(error => 'Request failed: ' . $hdrs->{Status} . ' (' . $hdrs->{Reason} . ')');
-				if ($hdrs->{Status} >= 590) {
+			unless ($code == 200) {
+				AE::log(error => 'Request failed: ' . $code . ' (' . $hdrs->{Reason} . ')');
+				if ($code >= 590) {
 					$cb->();
 					return;
 				}
@@ -211,7 +214,7 @@ sub _request {
 				AE::log(error => 'Unknown content type received: ' . ($hdrs->{'content-type'} // 'undef'));
 			}
 
-			$cb->($body, $enc);
+			$cb->($code, $body, $enc);
 			return;
 		}
 	);
