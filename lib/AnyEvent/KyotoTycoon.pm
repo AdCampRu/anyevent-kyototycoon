@@ -110,6 +110,7 @@ sub _request {
 		headers    => {'content-type' => 'text/tab-separated-values' . ($enc ? '; colenc=' . $enc : '')},
 		timeout    => $self->{timeout},
 		persistent => 1,
+		keepalive  => 1,
 		recurse    => 0,
 		sub {
 			my ($body, $hdrs) = @_;
