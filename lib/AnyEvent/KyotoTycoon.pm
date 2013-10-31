@@ -69,6 +69,19 @@ sub status {
 	$self->call('status', {}, $cb);
 }
 
+sub clear {
+	my $cb = pop();
+	my ($self) = @_;
+
+	$self->call(
+		'clear',
+		{},
+		sub {
+			$cb->($_[0] ? (1) : ());
+		}
+	);
+}
+
 sub set {
 	my $cb = pop();
 	my ($self, $key, $val, $xt) = @_;
