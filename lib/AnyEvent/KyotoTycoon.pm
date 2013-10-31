@@ -22,6 +22,19 @@ sub new {
 	);
 }
 
+sub void {
+	my $cb = pop();
+	my ($self) = @_;
+
+	$self->call(
+		'void',
+		{},
+		sub {
+			$cb->($_[0] ? (1) : ());
+		}
+	);
+}
+
 sub echo {
 	my $cb = pop();
 	my ($self, $args) = @_;
