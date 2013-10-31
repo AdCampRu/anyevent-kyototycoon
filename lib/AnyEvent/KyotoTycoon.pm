@@ -62,6 +62,13 @@ sub play_script {
 	);
 }
 
+sub status {
+	my $cb = pop();
+	my ($self) = @_;
+
+	$self->call('status', {}, $cb);
+}
+
 sub set {
 	my $cb = pop();
 	my ($self, $key, $val, $xt) = @_;
