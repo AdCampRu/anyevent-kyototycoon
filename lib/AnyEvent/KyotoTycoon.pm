@@ -158,13 +158,12 @@ sub call {
 		$body,
 		$enc,
 		sub {
-			my ($code, $body, $enc) = @_;
-
-			unless (defined($enc)) {
+			unless (@_) {
 				$cb->();
 				return;
 			}
 
+			my ($code, $body, $enc) = @_;
 			my $data = AnyEvent::KyotoTycoon::_Util::decode_tsv($body, $enc);
 
 			unless ($data) {
@@ -201,17 +200,21 @@ sub _request {
 			my ($body, $hdrs) = @_;
 
 			my $code = $hdrs->{Status};
-			my $enc  = AnyEvent::KyotoTycoon::_Util::check_encoding($hdrs->{'content-type'});
 
 			unless ($code == 200) {
 				AE::log(error => 'Request failed: ' . $code . ' (' . $hdrs->{Reason} . ')');
-				if ($code >= 590) {
+				unless ($code == 450) {
 					$cb->();
 					return;
 				}
 			}
+
+			my $enc = AnyEvent::KyotoTycoon::_Util::check_encoding($hdrs->{'content-type'});
+
 			unless (defined($enc)) {
 				AE::log(error => 'Unknown content type received: ' . ($hdrs->{'content-type'} // 'undef'));
+				$cb->();
+				return;
 			}
 
 			$cb->($code, $body, $enc);
