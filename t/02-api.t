@@ -83,7 +83,7 @@ $kt->play_script('baz', sub {
 $res{code} = 450;
 $res{body} = "ERROR\terror";
 $kt->play_script('baz', sub {
-	ok !$_[0];
+	ok !defined($_[0]);
 });
 $res{code} = 200;
 $req{body} = qr/name\tbaz\n_bar\tfoo|_bar\tfoo\nname\tbaz/;
@@ -128,18 +128,34 @@ $kt->set(foo => 'bar', 1, 'db', sub {
 	ok $_[0];
 });
 
+# $kt->increment($key, $val, [$xt, [$db, ]]$cb->($val));
+# $kt->increment_double($key, $val, [$xt, [$db, ]]$cb->($val));
+$req{body} = qr/key\tfoo\n1\tbar|num\t1\nkey\tfoo/;
+$res{body} = "num\t2";
+$kt->increment(foo => 1, sub {
+	is $_[0], 2;
+});
+$res{code} = 450;
+$res{body} = "ERROR\terror";
+$req{body} = qr/key\tfoo\nnum\tbar|num\tbar\nkey\tfoo/;
+$kt->increment(foo => 'bar', sub {
+	ok !defined($_[0]);
+});
+
 # $kt->get($key, [$db, ]$cb->([$val, $xt]));
+$res{code} = 200;
 $req{body} = "key\tfoo";
 $res{body} = "value\tbar";
 $kt->get('foo', sub {
 	is scalar(@_), 2;
 	is $_[0], 'bar';
-	ok !$_[1];
+	ok !defined($_[1]);
 });
 $res{code} = 450;
 $res{body} = "ERROR\terror";
 $kt->get('foo', sub {
-	ok !$_[0];
+	ok !defined($_[0]);
 });
+
 
 done_testing;

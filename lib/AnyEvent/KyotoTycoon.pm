@@ -138,6 +138,25 @@ sub set {
 # $kt->append($key, $val, [$xt, [$db, ]]$cb->($ret));
 *append = \&set;
 
+# $kt->increment($key, $val, [$xt, [$db, ]]$cb->($val));
+sub increment {
+	my $cb = pop();
+	my ($self, $key, $val, $xt, $db) = @_;
+
+	$db //= $self->{db};
+
+	$self->call(
+		'set',
+		{key => $key, num => $val, (defined($xt) ? (xt => $xt) : ()), (defined($db) ? (DB => $db) : ())},
+		sub {
+			$cb->($_[0] ? ($_[0]{num}) : ());
+		}
+	);
+}
+
+# $kt->increment_double($key, $val, [$xt, [$db, ]]$cb->($val));
+*increment_double = \&increment;
+
 # $kt->get($key, [$db, ]$cb->([$val, $xt]));
 sub get {
 	my $cb = pop();
