@@ -114,5 +114,32 @@ $kt->status('db', sub {
 	ok $_[0];
 });
 
+# $kt->set($key, $val, [$xt, [$db, ]]$cb->($ret));
+$req{body} = qr/key\tfoo\nvalue\tbar\nxt\t1\nDB\tdb|
+                key\tfoo\nvalue\tbar\nDB\tdb\nxt\t1|
+                key\tfoo\nDB\tdb\nxt\t1\nvalue\tbar|
+                key\tfoo\nxt\t1\nDB\tdb\nvalue\tbar|
+                value\tbar\nxt\t1\nDB\tdb\nkey\tfoo|
+                value\tbar\nDB\tdb\nxt\t1\nkey\tfoo|
+                DB\tdb\nxt\t1\nvalue\tbar\nkey\tfoo|
+                xt\t1\nDB\tdb\nvalue\tbar\nkey\tfoo/x;
+$res{body} = '';
+$kt->set(foo => 'bar', 1, 'db', sub {
+	ok $_[0];
+});
+
+# $kt->get($key, [$db, ]$cb->([$val, $xt]));
+$req{body} = "key\tfoo";
+$res{body} = "value\tbar";
+$kt->get('foo', sub {
+	is scalar(@_), 2;
+	is $_[0], 'bar';
+	ok !$_[1];
+});
+$res{code} = 450;
+$res{body} = "ERROR\terror";
+$kt->get('foo', sub {
+	ok !$_[0];
+});
 
 done_testing;
