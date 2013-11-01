@@ -132,6 +132,12 @@ sub set {
 # $kt->add($key, $val, [$xt, [$db, ]]$cb->($ret));
 *add = \&set;
 
+# $kt->replace($key, $val, [$xt, [$db, ]]$cb->($ret));
+*replace = \&set;
+
+# $kt->append($key, $val, [$xt, [$db, ]]$cb->($ret));
+*append = \&set;
+
 # $kt->get($key, [$db, ]$cb->([$val, $xt]));
 sub get {
 	my $cb = pop();
