@@ -1,4 +1,41 @@
-anyevent-kyototycoon
-====================
+NAME
 
-AnyEvent::KyotoTycoon — Asynchronous client to KyotoTycoon server
+AnyEvent::KyotoTycoon - non-bloking client for KyotoTycoon server.
+
+DESCRIPTION
+
+AnyEvent::UserAgent provides non-blocking KyotoTycoon API using AnyEvent.
+
+INSTALLATION
+
+To install this module, run the following commands:
+
+    perl Makefile.PL
+    make
+    make test
+    make install
+
+SUPPORT AND DOCUMENTATION
+
+After installing, you can find documentation for this module with the perldoc
+command.
+
+    perldoc AnyEvent::KyotoTycoon
+
+You can also look for information at:
+
+    Repository
+        http://github.com/AdCampRu/anyevent-kiototycoon
+    Bug tracker
+        http://github.com/AdCampRu/anyevent-kiototycoon/issues
+
+AUTHOR
+
+Denis Ibaev, dionys@cpan.org for AdCamp.ru.
+
+LICENSE
+
+This program is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
+
+See http://dev.perl.org/licenses/ for more information.
