@@ -47,7 +47,8 @@ sub void {
 	);
 }
 
-# $kt->echo([\%args, ]$cb->(\%vals));
+# $kt->echo($cb->(\%vals));
+# $kt->echo(\%args, $cb->(\%vals));
 sub echo {
 	my $cb = pop();
 	my ($self, $args) = @_;
@@ -65,7 +66,8 @@ sub report {
 	$self->call('report', {}, $cb);
 }
 
-# $kt->play_script($name, [\%args, ]$cb->(\%vals));
+# $kt->play_script($name, $cb->(\%vals));
+# $kt->play_script($name, \%args, $cb->(\%vals));
 sub play_script {
 	my $cb = pop();
 	my ($self, $name, $args) = @_;
@@ -86,12 +88,13 @@ sub tune_replication {
 	$cb->(1);
 }
 
-# $kt->status([$db, ]$cb->(\%vals));
+# $kt->status($cb->(\%vals));
+# $kt->status($db, $cb->(\%vals));
 sub status {
 	my $cb = pop();
 	my ($self, $db) = @_;
 
-	$db //= $self->{db};
+	$db //= $self->{database};
 
 	$self->call(
 		'status',
@@ -100,12 +103,13 @@ sub status {
 	);
 }
 
-# $kt->clear([$db, ]$cb->($ret));
+# $kt->clear($cb->($ret));
+# $kt->clear($db, $cb->($ret));
 sub clear {
 	my $cb = pop();
 	my ($self, $db) = @_;
 
-	$db //= $self->{db};
+	$db //= $self->{database};
 
 	$self->call(
 		'clear',
@@ -116,12 +120,14 @@ sub clear {
 	);
 }
 
-# $kt->set($key, $val, [$xt, [$db, ]]$cb->($ret));
+# $kt->set($key, $val, $cb->($ret));
+# $kt->set($key, $val, $xt, $cb->($ret));
+# $kt->set($key, $val, $xt, $db, $cb->($ret));
 sub set {
 	my $cb = pop();
 	my ($self, $key, $val, $xt, $db) = @_;
 
-	$db //= $self->{db};
+	$db //= $self->{database};
 
 	$self->call(
 		'set',
@@ -132,21 +138,29 @@ sub set {
 	);
 }
 
-# $kt->add($key, $val, [$xt, [$db, ]]$cb->($ret));
+# $kt->add($key, $val, $cb->($ret));
+# $kt->add($key, $val, $xt, $cb->($ret));
+# $kt->add($key, $val, $xt, $db, $cb->($ret));
 *add = \&set;
 
-# $kt->replace($key, $val, [$xt, [$db, ]]$cb->($ret));
+# $kt->replace($key, $val, $cb->($ret));
+# $kt->replace($key, $val, $xt, $cb->($ret));
+# $kt->replace($key, $val, $xt, $db, $cb->($ret));
 *replace = \&set;
 
-# $kt->append($key, $val, [$xt, [$db, ]]$cb->($ret));
+# $kt->append($key, $val, $cb->($ret));
+# $kt->append($key, $val, $xt, $cb->($ret));
+# $kt->append($key, $val, $xt, $db, $cb->($ret));
 *append = \&set;
 
-# $kt->increment($key, $val, [$xt, [$db, ]]$cb->($val));
+# $kt->increment($key, $val, $cb->($val));
+# $kt->increment($key, $val, $xt, $cb->($val));
+# $kt->increment($key, $val, $xt, $db, $cb->($val));
 sub increment {
 	my $cb = pop();
 	my ($self, $key, $val, $xt, $db) = @_;
 
-	$db //= $self->{db};
+	$db //= $self->{database};
 
 	$self->call(
 		'set',
@@ -157,15 +171,18 @@ sub increment {
 	);
 }
 
-# $kt->increment_double($key, $val, [$xt, [$db, ]]$cb->($val));
+# $kt->increment_double($key, $val, $cb->($val));
+# $kt->increment_double($key, $val, $xt, $cb->($val));
+# $kt->increment_double($key, $val, $xt, $db, $cb->($val));
 *increment_double = \&increment;
 
-# $kt->get($key, [$db, ]$cb->([$val, $xt]));
+# $kt->get($key, $cb->([$val, $xt]));
+# $kt->get($key, $db, $cb->([$val, $xt]));
 sub get {
 	my $cb = pop();
 	my ($self, $key, $db) = @_;
 
-	$db //= $self->{db};
+	$db //= $self->{database};
 
 	$self->call(
 		'get',
