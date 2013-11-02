@@ -58,7 +58,9 @@ $kt->void(sub {
 	};
 }
 
-# $kt->echo([\%args, ]$cb->(\%vals));
+# $kt->echo($cb->(\%vals));
+# $kt->echo(\%args, $cb->(\%vals));
+# $kt->echo(\%args, %opts, $cb->(\%vals));
 $res{body} = $req{body} = "foo\tbar";
 $kt->echo({foo => 'bar'}, sub {
 	cmp_deeply $_[0], {foo => 'bar'};
@@ -74,7 +76,9 @@ $kt->report(sub {
 	cmp_deeply $_[0], {foo => 'bar'};
 });
 
-# $kt->play_script($name, [\%args, ]$cb->(\%vals));
+# $kt->play_script($name, $cb->(\%vals));
+# $kt->play_script($name, \%args, $cb->(\%vals));
+# $kt->play_script($name, \%args, %opts, $cb->(\%vals));
 $req{body} = "name\tbaz";
 $res{body} = "_foo\tbar";
 $kt->play_script('baz', sub {
@@ -92,29 +96,36 @@ $kt->play_script('baz', {bar => 'foo'}, sub {
 	cmp_deeply $_[0], {foo => 'bar'};
 });
 
-# $kt->status([$db, ]$cb->(\%vals));
+# $kt->status($cb->(\%vals));
+# $kt->status(%opts, $cb->(\%vals));
 $req{body} = '';
 $res{body} = "count\t1\nsize\t2\nfoo\tbar";
 $kt->status(sub {
 	cmp_deeply $_[0], {foo => 'bar', count => ignore, size => ignore};
 });
 $req{body} = "DB\tdb";
-$kt->status('db', sub {
+$kt->status(database => 'db', sub {
 	cmp_deeply $_[0], {foo => 'bar', count => ignore, size => ignore};
 });
 
-# $kt->clear([$db, ]$cb->($ret));
+# $kt->clear($cb->($ret));
+# $kt->clear(%opts, $cb->($ret));
 $req{body} = '';
 $res{body} = '';
 $kt->clear(sub {
 	ok $_[0];
 });
 $req{body} = "DB\tdb";
-$kt->status('db', sub {
+$kt->status(database => 'db', sub {
 	ok $_[0];
 });
 
-# $kt->set($key, $val, [$xt, [$db, ]]$cb->($ret));
+# $kt->set($key, $val, $cb->($ret));
+# $kt->set($key, $val, $xt, $cb->($ret));
+# $kt->set($key, $val, $xt, %opts, $cb->($ret));
+# $kt->add...;
+# $kt->replace...;
+# $kt->append...;
 $req{body} = qr/key\tfoo\nvalue\tbar\nxt\t1\nDB\tdb|
                 key\tfoo\nvalue\tbar\nDB\tdb\nxt\t1|
                 key\tfoo\nDB\tdb\nxt\t1\nvalue\tbar|
@@ -124,12 +135,14 @@ $req{body} = qr/key\tfoo\nvalue\tbar\nxt\t1\nDB\tdb|
                 DB\tdb\nxt\t1\nvalue\tbar\nkey\tfoo|
                 xt\t1\nDB\tdb\nvalue\tbar\nkey\tfoo/x;
 $res{body} = '';
-$kt->set(foo => 'bar', 1, 'db', sub {
+$kt->set(foo => 'bar', 1, database => 'db', sub {
 	ok $_[0];
 });
 
-# $kt->increment($key, $val, [$xt, [$db, ]]$cb->($val));
-# $kt->increment_double($key, $val, [$xt, [$db, ]]$cb->($val));
+# $kt->increment($key, $val, $cb->($val));
+# $kt->increment($key, $val, $xt, $cb->($val));
+# $kt->increment($key, $val, $xt, %opts, $cb->($val));
+# $kt->increment_double...;
 $req{body} = qr/key\tfoo\n1\tbar|num\t1\nkey\tfoo/;
 $res{body} = "num\t2";
 $kt->increment(foo => 1, sub {
@@ -142,7 +155,8 @@ $kt->increment(foo => 'bar', sub {
 	ok !defined($_[0]);
 });
 
-# $kt->get($key, [$db, ]$cb->([$val, $xt]));
+# $kt->get($key, $cb->($val, $xt));
+# $kt->get($key, %opts, $cb->($val, $xt));
 $res{code} = 200;
 $req{body} = "key\tfoo";
 $res{body} = "value\tbar";

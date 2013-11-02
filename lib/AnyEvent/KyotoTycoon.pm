@@ -49,13 +49,15 @@ sub void {
 
 # $kt->echo($cb->(\%vals));
 # $kt->echo(\%args, $cb->(\%vals));
+# $kt->echo(\%args, %opts, $cb->(\%vals));
 sub echo {
 	my $cb = pop();
-	my ($self, $args) = @_;
+	my ($self, $args, %opts) = @_;
 
+	my $enc = exists($opts{encoding}) ? $opts{encoding} : $self->{encoding};
 	$args //= {};
 
-	$self->call('echo', $args, $cb);
+	$self->call('echo', $args, $enc, $cb);
 }
 
 # $kt->report($cb->(\%vals));
@@ -68,13 +70,17 @@ sub report {
 
 # $kt->play_script($name, $cb->(\%vals));
 # $kt->play_script($name, \%args, $cb->(\%vals));
+# $kt->play_script($name, \%args, %opts, $cb->(\%vals));
 sub play_script {
 	my $cb = pop();
-	my ($self, $name, $args) = @_;
+	my ($self, $name, $args, %opts) = @_;
+
+	my $enc = exists($opts{encoding}) ? $opts{encoding} : $self->{encoding};
 
 	$self->call(
 		'play_script',
 		{name => $name, ref($args) eq 'HASH' ? map { ('_' . $_ => $args->{$_}) } keys(%$args) : ()},
+		$enc,
 		sub {
 			$cb->($_[0] ? {map { (substr($_, 1) => $_[0]{$_}) } keys(%{$_[0]})} : ());
 		}
@@ -89,12 +95,12 @@ sub tune_replication {
 }
 
 # $kt->status($cb->(\%vals));
-# $kt->status($db, $cb->(\%vals));
+# $kt->status(%opts, $cb->(\%vals));
 sub status {
 	my $cb = pop();
-	my ($self, $db) = @_;
+	my ($self, %opts) = @_;
 
-	$db //= $self->{database};
+	my $db = exists($opts{database}) ? $opts{database} : $self->{database};
 
 	$self->call(
 		'status',
@@ -104,12 +110,12 @@ sub status {
 }
 
 # $kt->clear($cb->($ret));
-# $kt->clear($db, $cb->($ret));
+# $kt->clear(%opts, $cb->($ret));
 sub clear {
 	my $cb = pop();
-	my ($self, $db) = @_;
+	my ($self, %opts) = @_;
 
-	$db //= $self->{database};
+	my $db = exists($opts{database}) ? $opts{database} : $self->{database};
 
 	$self->call(
 		'clear',
@@ -122,16 +128,18 @@ sub clear {
 
 # $kt->set($key, $val, $cb->($ret));
 # $kt->set($key, $val, $xt, $cb->($ret));
-# $kt->set($key, $val, $xt, $db, $cb->($ret));
+# $kt->set($key, $val, $xt, %opts, $cb->($ret));
 sub set {
 	my $cb = pop();
-	my ($self, $key, $val, $xt, $db) = @_;
+	my ($self, $key, $val, $xt, %opts) = @_;
 
-	$db //= $self->{database};
+	my $db  = exists($opts{database}) ? $opts{database} : $self->{database};
+	my $enc = exists($opts{encoding}) ? $opts{encoding} : $self->{encoding};
 
 	$self->call(
 		'set',
 		{key => $key, value => $val, (defined($xt) ? (xt => $xt) : ()), (defined($db) ? (DB => $db) : ())},
+		$enc,
 		sub {
 			$cb->($_[0] ? (1) : ());
 		}
@@ -140,31 +148,33 @@ sub set {
 
 # $kt->add($key, $val, $cb->($ret));
 # $kt->add($key, $val, $xt, $cb->($ret));
-# $kt->add($key, $val, $xt, $db, $cb->($ret));
+# $kt->add($key, $val, $xt, %opts, $cb->($ret));
 *add = \&set;
 
 # $kt->replace($key, $val, $cb->($ret));
 # $kt->replace($key, $val, $xt, $cb->($ret));
-# $kt->replace($key, $val, $xt, $db, $cb->($ret));
+# $kt->replace($key, $val, $xt, %opts, $cb->($ret));
 *replace = \&set;
 
 # $kt->append($key, $val, $cb->($ret));
 # $kt->append($key, $val, $xt, $cb->($ret));
-# $kt->append($key, $val, $xt, $db, $cb->($ret));
+# $kt->append($key, $val, $xt, %opts, $cb->($ret));
 *append = \&set;
 
 # $kt->increment($key, $val, $cb->($val));
 # $kt->increment($key, $val, $xt, $cb->($val));
-# $kt->increment($key, $val, $xt, $db, $cb->($val));
+# $kt->increment($key, $val, $xt, %opts, $cb->($val));
 sub increment {
 	my $cb = pop();
-	my ($self, $key, $val, $xt, $db) = @_;
+	my ($self, $key, $val, $xt, %opts) = @_;
 
-	$db //= $self->{database};
+	my $db  = exists($opts{database}) ? $opts{database} : $self->{database};
+	my $enc = exists($opts{encoding}) ? $opts{encoding} : $self->{encoding};
 
 	$self->call(
 		'set',
 		{key => $key, num => $val, (defined($xt) ? (xt => $xt) : ()), (defined($db) ? (DB => $db) : ())},
+		$enc,
 		sub {
 			$cb->($_[0] ? ($_[0]{num}) : ());
 		}
@@ -173,16 +183,16 @@ sub increment {
 
 # $kt->increment_double($key, $val, $cb->($val));
 # $kt->increment_double($key, $val, $xt, $cb->($val));
-# $kt->increment_double($key, $val, $xt, $db, $cb->($val));
+# $kt->increment_double($key, $val, $xt, %opts, $cb->($val));
 *increment_double = \&increment;
 
-# $kt->get($key, $cb->([$val, $xt]));
-# $kt->get($key, $db, $cb->([$val, $xt]));
+# $kt->get($key, $cb->($val, $xt));
+# $kt->get($key, %opts, $cb->($val, $xt));
 sub get {
 	my $cb = pop();
-	my ($self, $key, $db) = @_;
+	my ($self, $key, %opts) = @_;
 
-	$db //= $self->{database};
+	my $db = exists($opts{database}) ? $opts{database} : $self->{database};
 
 	$self->call(
 		'get',
