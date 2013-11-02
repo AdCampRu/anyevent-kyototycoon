@@ -14,20 +14,23 @@ sub new {
 
 	return bless(
 		{
-			server  => $args{server}  // '127.0.0.1:1978',
-			db      => $args{db},
-			timeout => $args{timeout} // 1,
+			server   => $args{server}   // '127.0.0.1:1978',
+			database => $args{database},
+			encoding => $args{encoding} // '',
+			timeout  => $args{timeout}  // 1,
 		},
 		ref($proto) || $proto
 	);
 }
 
-sub db {
-	if (@_ > 1) {
-		$_[0]->{db} = $_[1];
-	}
+sub database {
+	$_[0]->{database} = $_[1] if @_ > 1;
+	return $_[0]->{database};
+}
 
-	return $_[0]->{db};
+sub encoding {
+	$_[0]->{encoding} = $_[1] if @_ > 1;
+	return $_[0]->{encoding};
 }
 
 # $kt->void($cb->($ret));
@@ -177,9 +180,9 @@ sub call {
 	my $cb = pop();
 	my ($self, $meth, $data, $enc) = @_;
 
-	$enc //= '';
+	$enc //= $self->{encoding};
 
-	my $body  = AnyEvent::KyotoTycoon::_Util::encode_tsv($data, $enc);
+	my $body = AnyEvent::KyotoTycoon::_Util::encode_tsv($data, $enc);
 
 	$self->_request(
 		'http://' . $self->{server} . '/rpc/' . $meth,
