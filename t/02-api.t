@@ -185,5 +185,21 @@ $kt->get('foo', sub {
 	ok !defined($_[0]);
 });
 
+# $kt->check($key, $cb->($val, $xt));
+# $kt->check($key, %opts, $cb->($val, $xt));
+$res{code} = 200;
+$req{body} = "key\tfoo";
+$res{body} = "vsiz\t1\nxt\t2";
+$kt->check('foo', sub {
+	is scalar(@_), 2;
+	is $_[0], 1;
+	is $_[1], 2;
+});
+$res{code} = 450;
+$res{body} = "ERROR\terror";
+$kt->check('foo', sub {
+	ok !defined($_[0]);
+});
+
 
 done_testing;

@@ -235,6 +235,25 @@ sub get {
 	);
 }
 
+# $kt->check($key, $cb->($val, $xt));
+# $kt->check($key, %opts, $cb->($val, $xt));
+sub check {
+	my $cb = pop();
+	my ($self, $key, %opts) = @_;
+
+	my $db  = exists($opts{database}) ? $opts{database} : $self->{database};
+	my $enc = exists($opts{encoding}) ? $opts{encoding} : $self->{encoding};
+
+	$self->call(
+		'check',
+		{key => $key, (defined($db) ? (DB => $db) : ())},
+		$enc,
+		sub {
+			$cb->($_[0] ? ($_[0]->{vsiz}, $_[0]->{xt}) : ());
+		}
+	);
+}
+
 sub call {
 	my $cb = pop();
 	my ($self, $meth, $data, $enc) = @_;
