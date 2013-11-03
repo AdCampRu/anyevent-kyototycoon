@@ -126,18 +126,15 @@ sub clear {
 	);
 }
 
-# $kt->set($key, $val, $cb->($ret));
-# $kt->set($key, $val, $xt, $cb->($ret));
-# $kt->set($key, $val, $xt, %opts, $cb->($ret));
-sub set {
+sub _set {
 	my $cb = pop();
-	my ($self, $key, $val, $xt, %opts) = @_;
+	my ($self, $proc, $key, $val, $xt, %opts) = @_;
 
 	my $db  = exists($opts{database}) ? $opts{database} : $self->{database};
 	my $enc = exists($opts{encoding}) ? $opts{encoding} : $self->{encoding};
 
 	$self->call(
-		'set',
+		$proc,
 		{key => $key, value => $val, (defined($xt) ? (xt => $xt) : ()), (defined($db) ? (DB => $db) : ())},
 		$enc,
 		sub {
@@ -146,33 +143,35 @@ sub set {
 	);
 }
 
+# $kt->set($key, $val, $cb->($ret));
+# $kt->set($key, $val, $xt, $cb->($ret));
+# $kt->set($key, $val, $xt, %opts, $cb->($ret));
+sub set { shift()->_set('set', @_); }
+
 # $kt->add($key, $val, $cb->($ret));
 # $kt->add($key, $val, $xt, $cb->($ret));
 # $kt->add($key, $val, $xt, %opts, $cb->($ret));
-*add = \&set;
+sub add { shift()->_set('add', @_); }
 
 # $kt->replace($key, $val, $cb->($ret));
 # $kt->replace($key, $val, $xt, $cb->($ret));
 # $kt->replace($key, $val, $xt, %opts, $cb->($ret));
-*replace = \&set;
+sub replace { shift()->_set('replace', @_); }
 
 # $kt->append($key, $val, $cb->($ret));
 # $kt->append($key, $val, $xt, $cb->($ret));
 # $kt->append($key, $val, $xt, %opts, $cb->($ret));
-*append = \&set;
+sub append { shift()->_set('append', @_); }
 
-# $kt->increment($key, $val, $cb->($val));
-# $kt->increment($key, $val, $xt, $cb->($val));
-# $kt->increment($key, $val, $xt, %opts, $cb->($val));
-sub increment {
+sub _increment {
 	my $cb = pop();
-	my ($self, $key, $val, $xt, %opts) = @_;
+	my ($self, $proc, $key, $val, $xt, %opts) = @_;
 
 	my $db  = exists($opts{database}) ? $opts{database} : $self->{database};
 	my $enc = exists($opts{encoding}) ? $opts{encoding} : $self->{encoding};
 
 	$self->call(
-		'set',
+		$proc,
 		{key => $key, num => $val, (defined($xt) ? (xt => $xt) : ()), (defined($db) ? (DB => $db) : ())},
 		$enc,
 		sub {
@@ -181,10 +180,41 @@ sub increment {
 	);
 }
 
+# $kt->increment($key, $val, $cb->($val));
+# $kt->increment($key, $val, $xt, $cb->($val));
+# $kt->increment($key, $val, $xt, %opts, $cb->($val));
+sub increment { shift()->_increment('increment', @_); }
+
 # $kt->increment_double($key, $val, $cb->($val));
 # $kt->increment_double($key, $val, $xt, $cb->($val));
 # $kt->increment_double($key, $val, $xt, %opts, $cb->($val));
-*increment_double = \&increment;
+sub increment_double { shift()->_increment('increment_double', @_); }
+
+sub cas {
+	my $cb = pop();
+
+	AE::log(error => 'Procedure "cas" not implemented');
+	$cb->(1);
+}
+
+# $kt->remove($key, $cb->($ret));
+# $kt->remove($key, %opts, $cb->($ret));
+sub remove {
+	my $cb = pop();
+	my ($self, $key, %opts) = @_;
+
+	my $db  = exists($opts{database}) ? $opts{database} : $self->{database};
+	my $enc = exists($opts{encoding}) ? $opts{encoding} : $self->{encoding};
+
+	$self->call(
+		'remove',
+		{key => $key, (defined($db) ? (DB => $db) : ())},
+		$enc,
+		sub {
+			$cb->($_[0] ? 1 : ());
+		}
+	);
+}
 
 # $kt->get($key, $cb->($val, $xt));
 # $kt->get($key, %opts, $cb->($val, $xt));
@@ -192,11 +222,13 @@ sub get {
 	my $cb = pop();
 	my ($self, $key, %opts) = @_;
 
-	my $db = exists($opts{database}) ? $opts{database} : $self->{database};
+	my $db  = exists($opts{database}) ? $opts{database} : $self->{database};
+	my $enc = exists($opts{encoding}) ? $opts{encoding} : $self->{encoding};
 
 	$self->call(
 		'get',
 		{key => $key, (defined($db) ? (DB => $db) : ())},
+		$enc,
 		sub {
 			$cb->($_[0] ? ($_[0]->{value}, $_[0]->{xt}) : ());
 		}

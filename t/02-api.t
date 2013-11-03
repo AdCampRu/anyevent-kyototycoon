@@ -155,6 +155,20 @@ $kt->increment(foo => 'bar', sub {
 	ok !defined($_[0]);
 });
 
+# $kt->remove($key, $cb->($ret));
+# $kt->remove($key, %opts, $cb->($ret));
+$res{code} = 200;
+$req{body} = "key\tfoo";
+$res{body} = "";
+$kt->remove('foo', sub {
+	ok $_[0];
+});
+$res{code} = 450;
+$res{body} = "ERROR\terror";
+$kt->remove('foo', sub {
+	ok !defined($_[0]);
+});
+
 # $kt->get($key, $cb->($val, $xt));
 # $kt->get($key, %opts, $cb->($val, $xt));
 $res{code} = 200;
