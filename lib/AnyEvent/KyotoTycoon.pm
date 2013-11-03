@@ -54,10 +54,7 @@ sub echo {
 	my $cb = pop();
 	my ($self, $args, %opts) = @_;
 
-	my $enc = exists($opts{encoding}) ? $opts{encoding} : $self->{encoding};
-	$args //= {};
-
-	$self->call('echo', $args, $enc, $cb);
+	$self->call('echo', $args // {}, %opts, $cb);
 }
 
 # $kt->report($cb->(\%vals));
@@ -75,12 +72,10 @@ sub play_script {
 	my $cb = pop();
 	my ($self, $name, $args, %opts) = @_;
 
-	my $enc = exists($opts{encoding}) ? $opts{encoding} : $self->{encoding};
-
 	$self->call(
 		'play_script',
 		{name => $name, ref($args) eq 'HASH' ? map { ('_' . $_ => $args->{$_}) } keys(%$args) : ()},
-		$enc,
+		%opts,
 		sub {
 			$cb->($_[0] ? {map { (substr($_, 1) => $_[0]{$_}) } keys(%{$_[0]})} : ());
 		}
@@ -130,13 +125,12 @@ sub _set {
 	my $cb = pop();
 	my ($self, $proc, $key, $val, $xt, %opts) = @_;
 
-	my $db  = exists($opts{database}) ? $opts{database} : $self->{database};
-	my $enc = exists($opts{encoding}) ? $opts{encoding} : $self->{encoding};
+	my $db = exists($opts{database}) ? delete($opts{database}) : $self->{database};
 
 	$self->call(
 		$proc,
 		{key => $key, value => $val, (defined($xt) ? (xt => $xt) : ()), (defined($db) ? (DB => $db) : ())},
-		$enc,
+		%opts,
 		sub {
 			$cb->($_[0] ? (1) : ());
 		}
@@ -167,13 +161,12 @@ sub _increment {
 	my $cb = pop();
 	my ($self, $proc, $key, $val, $xt, %opts) = @_;
 
-	my $db  = exists($opts{database}) ? $opts{database} : $self->{database};
-	my $enc = exists($opts{encoding}) ? $opts{encoding} : $self->{encoding};
+	my $db = exists($opts{database}) ? delete($opts{database}) : $self->{database};
 
 	$self->call(
 		$proc,
 		{key => $key, num => $val, (defined($xt) ? (xt => $xt) : ()), (defined($db) ? (DB => $db) : ())},
-		$enc,
+		%opts,
 		sub {
 			$cb->($_[0] ? ($_[0]{num}) : ());
 		}
@@ -203,13 +196,12 @@ sub remove {
 	my $cb = pop();
 	my ($self, $key, %opts) = @_;
 
-	my $db  = exists($opts{database}) ? $opts{database} : $self->{database};
-	my $enc = exists($opts{encoding}) ? $opts{encoding} : $self->{encoding};
+	my $db = exists($opts{database}) ? delete($opts{database}) : $self->{database};
 
 	$self->call(
 		'remove',
 		{key => $key, (defined($db) ? (DB => $db) : ())},
-		$enc,
+		%opts,
 		sub {
 			$cb->($_[0] ? 1 : ());
 		}
@@ -222,13 +214,12 @@ sub get {
 	my $cb = pop();
 	my ($self, $key, %opts) = @_;
 
-	my $db  = exists($opts{database}) ? $opts{database} : $self->{database};
-	my $enc = exists($opts{encoding}) ? $opts{encoding} : $self->{encoding};
+	my $db = exists($opts{database}) ? delete($opts{database}) : $self->{database};
 
 	$self->call(
 		'get',
 		{key => $key, (defined($db) ? (DB => $db) : ())},
-		$enc,
+		%opts,
 		sub {
 			$cb->($_[0] ? ($_[0]->{value}, $_[0]->{xt}) : ());
 		}
@@ -241,13 +232,12 @@ sub check {
 	my $cb = pop();
 	my ($self, $key, %opts) = @_;
 
-	my $db  = exists($opts{database}) ? $opts{database} : $self->{database};
-	my $enc = exists($opts{encoding}) ? $opts{encoding} : $self->{encoding};
+	my $db = exists($opts{database}) ? delete($opts{database}) : $self->{database};
 
 	$self->call(
 		'check',
 		{key => $key, (defined($db) ? (DB => $db) : ())},
-		$enc,
+		%opts,
 		sub {
 			$cb->($_[0] ? ($_[0]->{vsiz}, $_[0]->{xt}) : ());
 		}
@@ -256,14 +246,13 @@ sub check {
 
 sub call {
 	my $cb = pop();
-	my ($self, $meth, $data, $enc) = @_;
+	my ($self, $proc, $data, %opts) = @_;
 
-	$enc //= $self->{encoding};
-
+	my $enc  = exists($opts{encoding}) ? $opts{encoding} : $self->{encoding};
 	my $body = AnyEvent::KyotoTycoon::_Util::encode_tsv($data, $enc);
 
 	$self->_request(
-		'http://' . $self->{server} . '/rpc/' . $meth,
+		'http://' . $self->{server} . '/rpc/' . $proc,
 		$body,
 		$enc,
 		sub {
