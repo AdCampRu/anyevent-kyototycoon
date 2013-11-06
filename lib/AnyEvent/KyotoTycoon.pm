@@ -86,7 +86,7 @@ sub tune_replication {
 	my $cb = pop();
 
 	AE::log(error => 'Procedure "tune_replication" not implemented');
-	$cb->(1);
+	$cb->();
 }
 
 # $kt->status($cb->(\%vals));
@@ -187,7 +187,7 @@ sub cas {
 	my $cb = pop();
 
 	AE::log(error => 'Procedure "cas" not implemented');
-	$cb->(1);
+	$cb->();
 }
 
 # $kt->remove($key, $cb->($ret));
@@ -248,7 +248,7 @@ sub seize {
 	my $cb = pop();
 
 	AE::log(error => 'Procedure "seize" not implemented');
-	$cb->(1);
+	$cb->();
 }
 
 # $kt->set_bulk(\%vals, $cb->($num));
@@ -348,6 +348,27 @@ sub vacuum {
 			$cb->($_[0] ? 1 : ());
 		}
 	);
+}
+
+sub match_prefix {
+	my $cb = pop();
+
+	AE::log(error => 'Procedure "match_prefix" not implemented');
+	$cb->();
+}
+
+sub match_regex {
+	my $cb = pop();
+
+	AE::log(error => 'Procedure "match_regex" not implemented');
+	$cb->();
+}
+
+sub match_similar {
+	my $cb = pop();
+
+	AE::log(error => 'Procedure "match_similar" not implemented');
+	$cb->();
 }
 
 sub call {
