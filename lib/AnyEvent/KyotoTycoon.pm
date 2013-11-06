@@ -328,6 +328,28 @@ sub get_bulk {
 	);
 }
 
+# $kt->vacuum($cb->($ret));
+# $kt->vacuum($step, $cb->($ret));
+# $kt->vacuum($step, %opts, $cb->($ret));
+sub vacuum {
+	my $cb = pop();
+	my ($self, $step, %opts) = @_;
+
+	my $db = exists($opts{database}) ? delete($opts{database}) : $self->{database};
+
+	$self->call(
+		'vacuum',
+		{
+			(defined($db)   ? (DB => $db)     : ()),
+			(defined($step) ? (step => $step) : ()),
+		},
+		%opts,
+		sub {
+			$cb->($_[0] ? 1 : ());
+		}
+	);
+}
+
 sub call {
 	my $cb = pop();
 	my ($self, $proc, $data, %opts) = @_;
