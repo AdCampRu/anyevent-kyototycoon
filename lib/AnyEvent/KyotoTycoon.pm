@@ -221,13 +221,13 @@ sub get {
 		{key => $key, (defined($db) ? (DB => $db) : ())},
 		%opts,
 		sub {
-			$cb->($_[0] ? ($_[0]->{value}, $_[0]->{xt}) : ());
+			$cb->($_[0] ? ($_[0]{value}, $_[0]{xt}) : ());
 		}
 	);
 }
 
-# $kt->check($key, $cb->($val, $xt));
-# $kt->check($key, %opts, $cb->($val, $xt));
+# $kt->check($key, $cb->($size, $xt));
+# $kt->check($key, %opts, $cb->($size, $xt));
 sub check {
 	my $cb = pop();
 	my ($self, $key, %opts) = @_;
@@ -239,7 +239,91 @@ sub check {
 		{key => $key, (defined($db) ? (DB => $db) : ())},
 		%opts,
 		sub {
-			$cb->($_[0] ? ($_[0]->{vsiz}, $_[0]->{xt}) : ());
+			$cb->($_[0] ? ($_[0]{vsiz}, $_[0]{xt}) : ());
+		}
+	);
+}
+
+sub seize {
+	my $cb = pop();
+
+	AE::log(error => 'Procedure "seize" not implemented');
+	$cb->(1);
+}
+
+# $kt->set_bulk(\%vals, $cb->($num));
+# $kt->set_bulk(\%vals, $xt, $cb->($num));
+# $kt->set_bulk(\%vals, $xt, %opts, $cb->($num));
+sub set_bulk {
+	my $cb = pop();
+	my ($self, $vals, $xt, %opts) = @_;
+
+	my $db   = exists($opts{database}) ? delete($opts{database}) : $self->{database};
+	my $atom = exists($opts{atomic})   ? delete($opts{atomic}) // 1 : undef;
+
+	$self->call(
+		'set_bulk',
+		{
+			ref($vals) eq 'HASH' ? map { ('_' . $_ => $vals->{$_}) } keys(%$vals) : (),
+			(defined($xt)   ? (xt => $xt)    : ()),
+			(defined($db)   ? (DB => $db)    : ()),
+			(defined($atom) ? (atomic => '') : ()),
+		},
+		%opts,
+		sub {
+			$cb->($_[0] ? $_[0]{num} : ());
+		}
+	);
+}
+
+# $kt->remove_bulk(\@keys, $cb->($num));
+# $kt->remove_bulk(\@keys, %opts, $cb->($num));
+sub remove_bulk {
+	my $cb = pop();
+	my ($self, $keys, %opts) = @_;
+
+	my $db   = exists($opts{database}) ? delete($opts{database}) : $self->{database};
+	my $atom = exists($opts{atomic})   ? delete($opts{atomic}) // 1 : undef;
+
+	$self->call(
+		'remove_bulk',
+		{
+			ref($keys) eq 'ARRAY' ? map { ('_' . $_ => '') } @$keys : (),
+			(defined($db)   ? (DB => $db)    : ()),
+			(defined($atom) ? (atomic => '') : ()),
+		},
+		%opts,
+		sub {
+			$cb->($_[0] ? $_[0]{num} : ());
+		}
+	);
+}
+
+# $kt->get_bulk(\@keys, $cb->(\%vals, $num));
+# $kt->get_bulk(\@keys, %opts, $cb->(\%vals, $num));
+sub get_bulk {
+	my $cb = pop();
+	my ($self, $keys, %opts) = @_;
+
+	my $db   = exists($opts{database}) ? delete($opts{database}) : $self->{database};
+	my $atom = exists($opts{atomic})   ? delete($opts{atomic}) // 1 : undef;
+
+	$self->call(
+		'get_bulk',
+		{
+			ref($keys) eq 'ARRAY' ? map { ('_' . $_ => '') } @$keys : (),
+			(defined($db)   ? (DB => $db)    : ()),
+			(defined($atom) ? (atomic => '') : ()),
+		},
+		%opts,
+		sub {
+			if ($_[0]) {
+				my $num = delete($_[0]{num});
+				$cb->({map { (substr($_, 1) => $_[0]{$_}) } keys(%{$_[0]})}, $num);
+			}
+			else {
+				$cb->();
+			}
 		}
 	);
 }
