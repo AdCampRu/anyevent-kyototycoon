@@ -12,3 +12,4 @@ plan(skip_all => 'Test::CPAN::Changes required for this test')
 	unless eval('use Test::CPAN::Changes; 1');
 
 changes_ok();
+done_testing();

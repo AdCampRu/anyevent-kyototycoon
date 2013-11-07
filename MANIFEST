@@ -1,6 +1,7 @@
 Changes
 cpanfile
 lib/AnyEvent/KyotoTycoon.pm
+lib/AnyEvent/KyotoTycoon/Cursor.pm
 Makefile.PL
 MANIFEST
 MANIFEST.SKIP
@@ -12,3 +13,4 @@ t/90-pod.t
 t/91-pod-coverage.t
 t/92-manifest.t
 t/93-changes.t
+t/94-fixme.t

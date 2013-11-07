@@ -8,8 +8,8 @@ use Test::More;
 
 plan(skip_all => 'Set RELEASE_TESTING to enable this test (developer only)')
 	unless $ENV{RELEASE_TESTING};
-plan(skip_all => 'Test::CheckManifest 0.9 required for this test')
-	unless eval('use Test::CheckManifest 0.9; 1');
+plan(skip_all => 'Test::Fixme required for this test')
+	unless eval('use Test::Fixme; 1');
 
-ok_manifest();
+run_tests(where => 'lib', match => qr/not implemented/i);
 done_testing();
