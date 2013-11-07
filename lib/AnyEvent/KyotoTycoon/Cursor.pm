@@ -11,6 +11,7 @@ sub new {
 		{
 			client     => $args{client},
 			identifier => $args{identifier},
+			database   => $args{database},
 		},
 		ref($proto) || $proto
 	);
@@ -20,7 +21,7 @@ sub _jump {
 	my $cb = pop();
 	my ($self, $proc, $key, %opts) = @_;
 
-	my $db = exists($opts{database}) ? delete($opts{database}) : $self->{client}->database;
+	my $db = $self->{database};
 
 	$self->{client}->call(
 		$proc,

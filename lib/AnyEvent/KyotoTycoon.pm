@@ -371,6 +371,28 @@ sub match_similar {
 	$cb->();
 }
 
+# $kt->create_cursor($id, $cb->($cur));
+# $kt->create_cursor($id, %opts, $cb->($cur));
+sub create_cursor {
+	my $cb = pop();
+	my ($self, $id, %opts) = @_;
+
+	my $db = exists($opts{database}) ? delete($opts{database}) : $self->{database};
+
+	require AnyEvent::KyotoTycoon::Cursor;
+
+	$cb->(AnyEvent::KyotoTycoon::Cursor->new(client => $self, identifier => $id, database => $db));
+}
+
+# $kt->delete_cursor($cur, $cb->($ret));
+# $kt->delete_cursor($cur, %opts, $cb->($ret));
+sub delete_cursor {
+	my $cb = pop();
+	my (undef, $cur, %opts) = @_;
+
+	$cur->delete(%opts, $cb);
+}
+
 sub call {
 	my $cb = pop();
 	my ($self, $proc, $data, %opts) = @_;
