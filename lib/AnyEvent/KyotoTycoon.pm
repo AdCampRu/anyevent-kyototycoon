@@ -183,11 +183,30 @@ sub increment { shift()->_increment('increment', @_); }
 # $kt->increment_double($key, $val, $xt, %opts, $cb->($val));
 sub increment_double { shift()->_increment('increment_double', @_); }
 
+
+# $kt->cas($key, $cmp, $val, $cb->($ret));
+# $kt->cas($key, $cmp, $val, $xt, $cb->($ret));
+# $kt->cas($key, $cmp, $val, $xt, %opts, $cb->($ret));
 sub cas {
 	my $cb = pop();
+	my ($self, $key, $cmp, $val, $xt, %opts) = @_;
 
-	AE::log(error => 'Procedure "cas" not implemented');
-	$cb->();
+	my $db = exists($opts{database}) ? delete($opts{database}) : $self->{database};
+
+	$self->call(
+		'cas',
+		{
+			key => $key,
+			(defined($cmp) ? (oval => $cmp) : ()),
+			(defined($val) ? (nval => $val) : ()),
+			(defined($xt)  ? (xt => $xt)    : ()),
+			(defined($db)  ? (DB => $db)    : ()),
+		},
+		%opts,
+		sub {
+			$cb->($_[0] ? 1 : ());
+		}
+	);
 }
 
 # $kt->remove($key, $cb->($ret));
