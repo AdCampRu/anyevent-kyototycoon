@@ -58,11 +58,12 @@ sub echo {
 }
 
 # $kt->report($cb->(\%vals));
+# $kt->report(%opts, $cb->(\%vals));
 sub report {
 	my $cb = pop();
-	my ($self) = @_;
+	my ($self, %opts) = @_;
 
-	$self->call('report', {}, $cb);
+	$self->call('report', {}, %opts, $cb);
 }
 
 # $kt->play_script($name, $cb->(\%vals));
@@ -183,7 +184,6 @@ sub increment { shift()->_increment('increment', @_); }
 # $kt->increment_double($key, $val, $xt, %opts, $cb->($val));
 sub increment_double { shift()->_increment('increment_double', @_); }
 
-
 # $kt->cas($key, $cmp, $val, $cb->($ret));
 # $kt->cas($key, $cmp, $val, $xt, $cb->($ret));
 # $kt->cas($key, $cmp, $val, $xt, %opts, $cb->($ret));
@@ -227,16 +227,14 @@ sub remove {
 	);
 }
 
-# $kt->get($key, $cb->($val, $xt));
-# $kt->get($key, %opts, $cb->($val, $xt));
-sub get {
+sub _get {
 	my $cb = pop();
-	my ($self, $key, %opts) = @_;
+	my ($self, $proc, $key, %opts) = @_;
 
 	my $db = exists($opts{database}) ? delete($opts{database}) : $self->{database};
 
 	$self->call(
-		'get',
+		$proc,
 		{key => $key, (defined($db) ? (DB => $db) : ())},
 		%opts,
 		sub {
@@ -244,6 +242,10 @@ sub get {
 		}
 	);
 }
+
+# $kt->get($key, $cb->($val, $xt));
+# $kt->get($key, %opts, $cb->($val, $xt));
+sub get { shift()->_get('get', @_); }
 
 # $kt->check($key, $cb->($size, $xt));
 # $kt->check($key, %opts, $cb->($size, $xt));
@@ -263,12 +265,9 @@ sub check {
 	);
 }
 
-sub seize {
-	my $cb = pop();
-
-	AE::log(error => 'Procedure "seize" not implemented');
-	$cb->();
-}
+# $kt->seize($key, $cb->($size, $xt));
+# $kt->seize($key, %opts, $cb->($size, $xt));
+sub seize { shift()->_get('seize', @_); }
 
 # $kt->set_bulk(\%vals, $cb->($num));
 # $kt->set_bulk(\%vals, $xt, $cb->($num));
