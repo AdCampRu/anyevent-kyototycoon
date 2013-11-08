@@ -490,3 +490,162 @@ sub _request {
 
 
 1;
+
+
+__END__
+
+=head1 NAME
+
+AnyEvent::KyotoTycoon - non-bloking client for KyotoTycoon server.
+
+=head1 SYNOPSIS
+
+    use AnyEvent::KyotoTycoon;
+
+    my $kt = AnyEvent::KyotoTycoon->new(server => '127.0.0.1:1978');
+    my $cv = AE::cv;
+
+    $kt->set(foo => 'bar', sub {
+        if (@_) {
+            $kt->get('foo', sub {
+                $cv->send($_[0]);
+            });
+        }
+        else {
+            $cv->send();
+        }
+    });
+    say($cv->recv());
+
+=head1 DESCRIPTION
+
+AnyEvent::KyotoTycoon provides non-blocking KyotoTycoon API version 1 using
+L<AnyEvent::HTTP>.
+
+See the L<KyotoTycoon protocol version 1 specification|http://fallabs.com/kyototycoon/spex.html#protocol>
+for greater detail.
+
+=head1 METHODS
+
+All methods except the constructor C<new> correspond KyotoTycoon protocol
+procedures. These methods take a code reference (callback) as the last argument.
+If the request to the server is successful, then this callback will be called
+with some arguments that depends of the type of procedure. If there is protocol
+or communication error, then callback will be called with no arguments.
+
+=head2 new
+
+    my $kt = AnyEvent::UserAgent->new(%args);
+
+Constructor for the client. Any of the attributes with accessor methods
+described below may be passed to the constructor as key-value pairs.
+
+=over
+
+=item server
+
+Host name and port number of server machine. Default is C<127.0.0.1:1978>.
+
+=item database
+
+Name or identifier of database. Default is undefined.
+
+=item encoding
+
+Encoding for TSV-RPC call. Following encodings are available: C<B> - Base64,
+C<Q> - Quoted-Printable, C<U> - URI escape, or false value - no encoding.
+Default is no encoding.
+
+=item timeout
+
+Timeout value for each request in seconds. Default is 1 second.
+
+=back
+
+=head2 void
+
+    $kt->void($cb->($ret));
+
+Does nothing, just for testing. Callback will be triggered with true value on
+success.
+
+=head2 echo
+
+=head2 report
+
+=head2 play_script
+
+=head2 status
+
+=head2 clear
+
+=head2 synchronize
+
+=head2 set
+
+=head2 add
+
+=head2 replace
+
+=head2 append
+
+=head2 increment
+
+=head2 increment_double
+
+=head2 cas
+
+=head2 remove
+
+=head2 get
+
+=head2 check
+
+=head2 seize
+
+=head2 set_bulk
+
+=head2 remove_bulk
+
+=head2 get_bulk
+
+=head2 vacuum
+
+=head2 match_prefix
+
+=head2 match_regex
+
+=head2 match_similar
+
+=head1 SEE ALSO
+
+L<AnyEvent::HTTP>,
+L<Cache::KyotoTycoon>,
+L<KyotoTycoon protocol version 1 specification|http://fallabs.com/kyototycoon/spex.html#protocol>.
+
+=head1 SUPPORT
+
+=over 4
+
+=item Repository
+
+L<http://github.com/AdCampRu/anyevent-kyototycoon>
+
+=item Bug tracker
+
+L<http://github.com/AdCampRu/anyevent-kyototycoon/issues>
+
+=back
+
+=head1 AUTHOR
+
+Denis Ibaev C<dionys@cpan.org> for AdCamp.ru.
+
+=head1 LICENSE
+
+This library is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
+
+See L<http://dev.perl.org/licenses/> for more information.
+
+=cut
