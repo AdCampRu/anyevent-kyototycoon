@@ -3,6 +3,8 @@ package AnyEvent::KyotoTycoon::Cursor;
 use strict;
 use warnings;
 
+use AnyEvent::KyotoTycoon::Util qw(fetch_ret_cb fetch_val_cb);
+
 
 sub new {
 	my ($proto, %args) = @_;
@@ -31,9 +33,7 @@ sub _jump {
 			(defined($key) ? (key => $key) : ()),
 		},
 		%opts,
-		sub {
-			$cb->($_[0] ? 1 : ());
-		}
+		fetch_ret_cb($cb)
 	);
 }
 
@@ -55,9 +55,7 @@ sub _step {
 		$proc,
 		{CUR => $self->{identifier}},
 		%opts,
-		sub {
-			$cb->($_[0] ? 1 : ());
-		}
+		fetch_ret_cb($cb)
 	);
 }
 
@@ -85,9 +83,7 @@ sub set_value {
 			(defined($step) ? (step => '') : ()),
 		},
 		%opts,
-		sub {
-			$cb->($_[0] ? 1 : ());
-		}
+		fetch_ret_cb($cb)
 	);
 }
 
@@ -101,9 +97,7 @@ sub remove {
 		'cur_remove',
 		{CUR => $self->{identifier}},
 		%opts,
-		sub {
-			$cb->($_[0] ? 1 : ());
-		}
+		fetch_ret_cb($cb)
 	);
 }
 
@@ -120,9 +114,7 @@ sub get_key {
 			(defined($step) ? (step => '') : ()),
 		},
 		%opts,
-		sub {
-			$cb->($_[0] ? $_[0]{key} : ());
-		}
+		fetch_val_cb('key', $cb)
 	);
 }
 
@@ -139,9 +131,7 @@ sub get_value {
 			(defined($step) ? (step => '') : ()),
 		},
 		%opts,
-		sub {
-			$cb->($_[0] ? $_[0]{value} : ());
-		}
+		fetch_val_cb('value', $cb)
 	);
 }
 
@@ -158,9 +148,7 @@ sub get {
 			(defined($step) ? (step => '') : ()),
 		},
 		%opts,
-		sub {
-			$cb->($_[0] ? ($_[0]{key}, $_[0]{value}, $_[0]{xt}) : ());
-		}
+		fetch_val_cb('key', 'value', 'xt', $cb)
 	);
 }
 
@@ -174,9 +162,7 @@ sub seize {
 		'cur_seize',
 		{CUR => $self->{identifier}},
 		%opts,
-		sub {
-			$cb->($_[0] ? ($_[0]{key}, $_[0]{value}, $_[0]{xt}) : ());
-		}
+		fetch_val_cb('key', 'value', 'xt', $cb)
 	);
 }
 
@@ -190,9 +176,7 @@ sub delete {
 		'cur_delete',
 		{CUR => $self->{identifier}},
 		%opts,
-		sub {
-			$cb->($_[0] ? 1 : ());
-		}
+		fetch_ret_cb($cb)
 	);
 }
 
