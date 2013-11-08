@@ -6,7 +6,9 @@ use warnings;
 use AnyEvent ();
 use AnyEvent::HTTP qw(http_post);
 
+use AnyEvent::KyotoTycoon::TSVRPC qw(encode_tsv decode_tsv check_encoding);
 use AnyEvent::KyotoTycoon::Util qw(fetch_ret_cb fetch_val_cb fetch_vals_cb);
+
 
 our $VERSION = '0.01';
 
@@ -414,7 +416,7 @@ sub call {
 	my ($self, $proc, $data, %opts) = @_;
 
 	my $enc  = exists($opts{encoding}) ? $opts{encoding} : $self->{encoding};
-	my $body = AnyEvent::KyotoTycoon::_Util::encode_tsv($data, $enc);
+	my $body = encode_tsv($data, $enc);
 
 	$self->_request(
 		'http://' . $self->{server} . '/rpc/' . $proc,
@@ -427,7 +429,7 @@ sub call {
 			}
 
 			my ($code, $body, $enc) = @_;
-			my $data = AnyEvent::KyotoTycoon::_Util::decode_tsv($body, $enc);
+			my $data = decode_tsv($body, $enc);
 
 			unless ($data) {
 				AE::log(error => 'Body decoding failed');
@@ -472,7 +474,7 @@ sub _request {
 				}
 			}
 
-			my $enc = AnyEvent::KyotoTycoon::_Util::check_encoding($hdrs->{'content-type'});
+			my $enc = check_encoding($hdrs->{'content-type'});
 
 			unless (defined($enc)) {
 				AE::log(error => 'Unknown content type received: ' . ($hdrs->{'content-type'} // 'undef'));
@@ -484,76 +486,6 @@ sub _request {
 			return;
 		}
 	);
-}
-
-
-BEGIN {
-	package AnyEvent::KyotoTycoon::_Util;
-
-	use strict;
-	use warnings;
-
-	require MIME::QuotedPrint;
-	require MIME::Base64;
-
-	my %ENCODERS = (
-		''  => sub { $_[0] },
-		'Q' => sub { MIME::QuotedPrint::encode_qp($_[0], '') },
-		'B' => sub { MIME::Base64::encode_base64($_[0], '') },
-	);
-	my %DECODERS = (
-		''  => $ENCODERS{''},
-		'Q' => sub { MIME::QuotedPrint::decode_qp($_[0]) },
-		'B' => sub { MIME::Base64::decode_base64($_[0]) },
-	);
-
-	eval {
-		require URI::Escape::XS;
-		$ENCODERS{U} = \&URI::Escape::XS::uri_escape;
-		$DECODERS{U} = \&URI::Escape::XS::uri_unescape;
-	};
-	if ($@) {
-		require URI::Escape;
-		$ENCODERS{U} = \&URI::Escape::uri_escape;
-		$DECODERS{U} = \&URI::Escape::uri_unescape;
-	}
-
-	sub encode_tsv {
-		my ($data, $enc) = @_;
-
-		return unless ref($data) eq 'HASH';
-
-		my $sub = $enc ? $ENCODERS{$enc} // $ENCODERS{''} : $ENCODERS{''};
-
-		return join(
-			"\n",
-			map {
-				$sub->($_) . "\t" . $sub->($data->{$_} // '');
-			} keys(%$data)
-		);
-	}
-
-	sub decode_tsv {
-		my ($data, $enc) = @_;
-
-		return if !defined($data) || ref($data);
-
-		my $sub = $enc ? $DECODERS{$enc} // $DECODERS{''} : $DECODERS{''};
-
-		return {
-			map {
-				map { $sub->($_) } (split(/\t/, $_, 2), '')[0, 1];
-			}
-			grep { length }
-			split(/\n/, $data)
-		};
-	}
-
-	sub check_encoding {
-		return unless defined($_[0]);
-		return $1 // '' if $_[0] =~ /text\/tab\-separated\-values(?:; colenc=([BUQ]))?/;
-		return;
-	}
 }
 
 

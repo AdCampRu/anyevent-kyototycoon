@@ -2,13 +2,14 @@ Changes
 cpanfile
 lib/AnyEvent/KyotoTycoon.pm
 lib/AnyEvent/KyotoTycoon/Cursor.pm
+lib/AnyEvent/KyotoTycoon/TSVRPC.pm
 lib/AnyEvent/KyotoTycoon/Util.pm
 Makefile.PL
 MANIFEST
 MANIFEST.SKIP
 README
 t/00-use.t
-t/01-util.t
+t/01-tsv-rpc.t
 t/02-api.t
 t/90-pod.t
 t/91-pod-coverage.t
