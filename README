@@ -4,7 +4,7 @@ AnyEvent::KyotoTycoon - non-bloking client for KyotoTycoon server.
 
 DESCRIPTION
 
-AnyEvent::UserAgent provides non-blocking KyotoTycoon API using AnyEvent.
+AnyEvent::KyotoTycoon provides non-blocking KyotoTycoon API using AnyEvent.
 
 INSTALLATION
 
