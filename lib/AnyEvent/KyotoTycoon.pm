@@ -283,9 +283,9 @@ sub set_bulk {
 		'set_bulk',
 		{
 			ref($vals) eq 'HASH' ? map { ('_' . $_ => $vals->{$_}) } keys(%$vals) : (),
-			(defined($xt)   ? (xt => $xt)    : ()),
-			(defined($db)   ? (DB => $db)    : ()),
-			(defined($atom) ? (atomic => '') : ()),
+			(defined($xt)   ? (xt => $xt)     : ()),
+			(defined($db)   ? (DB => $db)     : ()),
+			(defined($atom) ? (atomic => '1') : ()),
 		},
 		%opts,
 		sub {
@@ -307,8 +307,8 @@ sub remove_bulk {
 		'remove_bulk',
 		{
 			ref($keys) eq 'ARRAY' ? map { ('_' . $_ => '') } @$keys : (),
-			(defined($db)   ? (DB => $db)    : ()),
-			(defined($atom) ? (atomic => '') : ()),
+			(defined($db)   ? (DB => $db)     : ()),
+			(defined($atom) ? (atomic => '1') : ()),
 		},
 		%opts,
 		sub {
@@ -330,8 +330,8 @@ sub get_bulk {
 		'get_bulk',
 		{
 			ref($keys) eq 'ARRAY' ? map { ('_' . $_ => '') } @$keys : (),
-			(defined($db)   ? (DB => $db)    : ()),
-			(defined($atom) ? (atomic => '') : ()),
+			(defined($db)   ? (DB => $db)     : ()),
+			(defined($atom) ? (atomic => '1') : ()),
 		},
 		%opts,
 		sub {
@@ -368,25 +368,73 @@ sub vacuum {
 	);
 }
 
-sub match_prefix {
+sub _match {
 	my $cb = pop();
+	my ($self, $proc, $test, $max, %opts) = @_;
 
-	AE::log(error => 'Procedure "match_prefix" not implemented');
-	$cb->();
+	my $db = exists($opts{database}) ? delete($opts{database}) : $self->{database};
+
+	$self->call(
+		$proc,
+		{
+			prefix => $test,
+			(defined($db)  ? (DB => $db)   : ()),
+			(defined($max) ? (max => $max) : ()),
+		},
+		%opts,
+		sub {
+			if ($_[0]) {
+				my $num = delete($_[0]{num});
+				$cb->({map { (substr($_, 1) => $_[0]{$_}) } keys(%{$_[0]})}, $num);
+			}
+			else {
+				$cb->();
+			}
+		}
+	);
 }
 
-sub match_regex {
-	my $cb = pop();
+# $kt->match_prefix($pref, $cb->(\%vals, $num));
+# $kt->match_prefix($pref, $max, $cb->(\%vals, $num));
+# $kt->match_prefix($prex, $max, %opts, $cb->(\%vals, $num));
+sub match_prefix { shift()->_match('match_prefix', @_); }
 
-	AE::log(error => 'Procedure "match_regex" not implemented');
-	$cb->();
-}
+# $kt->match_regex($regex, $cb->(\%vals, $num));
+# $kt->match_regex($regex, $max, $cb->(\%vals, $num));
+# $kt->match_regex($regex, $max, %opts, $cb->(\%vals, $num));
+sub match_regex { shift()->_match('match_regex', @_); }
 
+# $kt->match_similar($orig, $cb->(\%vals, $num));
+# $kt->match_similar($orig, $range, $cb->(\%vals, $num));
+# $kt->match_similar($orig, $range, $max, $cb->(\%vals, $num));
+# $kt->match_similar($orig, $range, $max, %opts, $cb->(\%vals, $num));
 sub match_similar {
 	my $cb = pop();
+	my ($self, $test, $range, $max, %opts) = @_;
 
-	AE::log(error => 'Procedure "match_similar" not implemented');
-	$cb->();
+	my $db  = exists($opts{database}) ? delete($opts{database}) : $self->{database};
+	my $utf = exists($opts{utf8}) ? delete($opts{utf8}) // 1 : undef;
+
+	$self->call(
+		'match_similar',
+		{
+			origin => $test,
+			(defined($db)    ? (DB => $db)       : ()),
+			(defined($range) ? (range => $range) : ()),
+			(defined($max)   ? (max => $max)     : ()),
+			(defined($utf)   ? (utf => '1')      : ()),
+		},
+		%opts,
+		sub {
+			if ($_[0]) {
+				my $num = delete($_[0]{num});
+				$cb->({map { (substr($_, 1) => $_[0]{$_}) } keys(%{$_[0]})}, $num);
+			}
+			else {
+				$cb->();
+			}
+		}
+	);
 }
 
 # $kt->create_cursor($id, $cb->($cur));
