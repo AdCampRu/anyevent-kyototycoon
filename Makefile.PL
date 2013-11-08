@@ -18,6 +18,7 @@ WriteMakefile(
 		'Test::More'        => 0,
 	},
 	PREREQ_PM        => {
+		'parent'            => 0,
 		'AnyEvent'          => 0,
 		'AnyEvent::HTTP'    => 0,
 		'MIME::Base64'      => 0,

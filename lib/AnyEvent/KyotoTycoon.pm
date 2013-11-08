@@ -6,6 +6,8 @@ use warnings;
 use AnyEvent ();
 use AnyEvent::HTTP qw(http_post);
 
+use AnyEvent::KyotoTycoon::Util qw(fetch_ret_cb fetch_val_cb fetch_vals_cb);
+
 our $VERSION = '0.01';
 
 
@@ -38,13 +40,7 @@ sub void {
 	my $cb = pop();
 	my ($self) = @_;
 
-	$self->call(
-		'void',
-		{},
-		sub {
-			$cb->($_[0] ? (1) : ());
-		}
-	);
+	$self->call('void', {}, fetch_ret_cb($cb));
 }
 
 # $kt->echo($cb->(\%vals));
@@ -75,11 +71,12 @@ sub play_script {
 
 	$self->call(
 		'play_script',
-		{name => $name, ref($args) eq 'HASH' ? map { ('_' . $_ => $args->{$_}) } keys(%$args) : ()},
+		{
+			name => $name,
+			ref($args) eq 'HASH' ? map { ('_' . $_ => $args->{$_}) } keys(%$args) : (),
+		},
 		%opts,
-		sub {
-			$cb->($_[0] ? {map { (substr($_, 1) => $_[0]{$_}) } keys(%{$_[0]})} : ());
-		}
+		fetch_vals_cb($cb)
 	);
 }
 
@@ -98,11 +95,7 @@ sub status {
 
 	my $db = exists($opts{database}) ? $opts{database} : $self->{database};
 
-	$self->call(
-		'status',
-		{defined($db) ? (DB => $db) : ()},
-		$cb
-	);
+	$self->call('status', {defined($db) ? (DB => $db) : ()}, $cb);
 }
 
 # $kt->clear($cb->($ret));
@@ -113,13 +106,7 @@ sub clear {
 
 	my $db = exists($opts{database}) ? $opts{database} : $self->{database};
 
-	$self->call(
-		'clear',
-		{defined($db) ? (DB => $db) : ()},
-		sub {
-			$cb->($_[0] ? (1) : ());
-		}
-	);
+	$self->call('clear', {defined($db) ? (DB => $db) : ()}, fetch_ret_cb($cb));
 }
 
 sub _set {
@@ -130,11 +117,14 @@ sub _set {
 
 	$self->call(
 		$proc,
-		{key => $key, value => $val, (defined($xt) ? (xt => $xt) : ()), (defined($db) ? (DB => $db) : ())},
+		{
+			key   => $key,
+			value => $val,
+			(defined($xt) ? (xt => $xt) : ()),
+			(defined($db) ? (DB => $db) : ()),
+		},
 		%opts,
-		sub {
-			$cb->($_[0] ? (1) : ());
-		}
+		fetch_ret_cb($cb)
 	);
 }
 
@@ -168,9 +158,7 @@ sub _increment {
 		$proc,
 		{key => $key, num => $val, (defined($xt) ? (xt => $xt) : ()), (defined($db) ? (DB => $db) : ())},
 		%opts,
-		sub {
-			$cb->($_[0] ? ($_[0]{num}) : ());
-		}
+		fetch_val_cb('num', $cb)
 	);
 }
 
@@ -203,9 +191,7 @@ sub cas {
 			(defined($db)  ? (DB => $db)    : ()),
 		},
 		%opts,
-		sub {
-			$cb->($_[0] ? 1 : ());
-		}
+		fetch_ret_cb($cb)
 	);
 }
 
@@ -221,9 +207,7 @@ sub remove {
 		'remove',
 		{key => $key, (defined($db) ? (DB => $db) : ())},
 		%opts,
-		sub {
-			$cb->($_[0] ? 1 : ());
-		}
+		fetch_ret_cb($cb)
 	);
 }
 
@@ -237,9 +221,7 @@ sub _get {
 		$proc,
 		{key => $key, (defined($db) ? (DB => $db) : ())},
 		%opts,
-		sub {
-			$cb->($_[0] ? ($_[0]{value}, $_[0]{xt}) : ());
-		}
+		fetch_val_cb('value', 'xt', $cb)
 	);
 }
 
@@ -259,9 +241,7 @@ sub check {
 		'check',
 		{key => $key, (defined($db) ? (DB => $db) : ())},
 		%opts,
-		sub {
-			$cb->($_[0] ? ($_[0]{vsiz}, $_[0]{xt}) : ());
-		}
+		fetch_val_cb('vsiz', 'xt', $cb)
 	);
 }
 
@@ -288,9 +268,7 @@ sub set_bulk {
 			(defined($atom) ? (atomic => '1') : ()),
 		},
 		%opts,
-		sub {
-			$cb->($_[0] ? $_[0]{num} : ());
-		}
+		fetch_val_cb('num', $cb)
 	);
 }
 
@@ -311,9 +289,7 @@ sub remove_bulk {
 			(defined($atom) ? (atomic => '1') : ()),
 		},
 		%opts,
-		sub {
-			$cb->($_[0] ? $_[0]{num} : ());
-		}
+		fetch_val_cb('num', $cb)
 	);
 }
 
@@ -334,15 +310,7 @@ sub get_bulk {
 			(defined($atom) ? (atomic => '1') : ()),
 		},
 		%opts,
-		sub {
-			if ($_[0]) {
-				my $num = delete($_[0]{num});
-				$cb->({map { (substr($_, 1) => $_[0]{$_}) } keys(%{$_[0]})}, $num);
-			}
-			else {
-				$cb->();
-			}
-		}
+		fetch_vals_cb($cb)
 	);
 }
 
@@ -362,9 +330,7 @@ sub vacuum {
 			(defined($step) ? (step => $step) : ()),
 		},
 		%opts,
-		sub {
-			$cb->($_[0] ? 1 : ());
-		}
+		fetch_ret_cb($cb)
 	);
 }
 
@@ -382,15 +348,7 @@ sub _match {
 			(defined($max) ? (max => $max) : ()),
 		},
 		%opts,
-		sub {
-			if ($_[0]) {
-				my $num = delete($_[0]{num});
-				$cb->({map { (substr($_, 1) => $_[0]{$_}) } keys(%{$_[0]})}, $num);
-			}
-			else {
-				$cb->();
-			}
-		}
+		fetch_vals_cb($cb)
 	);
 }
 
@@ -425,15 +383,7 @@ sub match_similar {
 			(defined($utf)   ? (utf => '1')      : ()),
 		},
 		%opts,
-		sub {
-			if ($_[0]) {
-				my $num = delete($_[0]{num});
-				$cb->({map { (substr($_, 1) => $_[0]{$_}) } keys(%{$_[0]})}, $num);
-			}
-			else {
-				$cb->();
-			}
-		}
+		fetch_vals_cb($cb)
 	);
 }
 

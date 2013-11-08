@@ -2,6 +2,7 @@ Changes
 cpanfile
 lib/AnyEvent/KyotoTycoon.pm
 lib/AnyEvent/KyotoTycoon/Cursor.pm
+lib/AnyEvent/KyotoTycoon/Util.pm
 Makefile.PL
 MANIFEST
 MANIFEST.SKIP
