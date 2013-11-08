@@ -6,12 +6,12 @@ use warnings;
 use Test::More;
 use Test::Deep;
 
-use AnyEvent::KyotoTycoon::TSVRPC ();
+use AnyEvent::KyotoTycoon::TSVRPC qw(encode_tsv decode_tsv check_encoding);
 
 
-*encode = *AnyEvent::KyotoTycoon::TSVRPC::encode_tsv;
-*decode = *AnyEvent::KyotoTycoon::TSVRPC::decode_tsv;
-*check  = *AnyEvent::KyotoTycoon::TSVRPC::check_encoding;
+*encode = \&encode_tsv;
+*decode = \&decode_tsv;
+*check  = \&check_encoding;
 
 
 is encode(),   undef;

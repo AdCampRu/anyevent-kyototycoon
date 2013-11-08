@@ -1,4 +1,5 @@
-package AnyEvent::KyotoTycoon::TSVRPC;
+package
+	AnyEvent::KyotoTycoon::TSVRPC;
 
 use strict;
 use warnings;

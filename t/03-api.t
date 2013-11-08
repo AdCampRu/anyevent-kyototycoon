@@ -9,6 +9,9 @@ use Test::Deep;
 use AnyEvent::KyotoTycoon ();
 
 
+local $ENV{PERL_ANYEVENT_LOG} = 'log=nolog';
+
+
 my %req = (ct => 'text/tab-separated-values', body => '');
 my %res = (code => 200, %req);
 my $kt = AnyEvent::KyotoTycoon->new;

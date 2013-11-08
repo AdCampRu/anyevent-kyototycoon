@@ -13,5 +13,7 @@ plan(skip_all => 'Test::Pod::Coverage 1.04 required for this test')
 plan(skip_all => 'Pod::Coverage 0.18 required for this test')
 	unless eval('use Pod::Coverage 0.18; 1');
 
-all_pod_coverage_ok();
+pod_coverage_ok('AnyEvent::KyotoTycoon');
+pod_coverage_ok('AnyEvent::KyotoTycoon::Cursor');
+
 done_testing();

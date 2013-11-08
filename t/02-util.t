@@ -9,9 +9,9 @@ use Test::Deep;
 use AnyEvent::KyotoTycoon::Util qw(fetch_ret_cb fetch_val_cb fetch_vals_cb);
 
 
-*ret_cb  = *fetch_ret_cb;
-*val_cb  = *fetch_val_cb;
-*vals_cb = *fetch_vals_cb;
+*ret_cb  = \&fetch_ret_cb;
+*val_cb  = \&fetch_val_cb;
+*vals_cb = \&fetch_vals_cb;
 
 
 ret_cb(sub {
